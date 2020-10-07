@@ -1,6 +1,9 @@
 import cv2
 import threading
 import time
+import sys
+
+from flask import Flask, render_template, Response
 
 class captureVideo:
     def __init__(self, URL):
@@ -46,20 +49,45 @@ class captureVideo:
 
         self.cap.release()
 
-URL = "rtsp://root:1111111a@10.16.4.169/live1s1.sdp"
-video = captureVideo(URL)
-video.start()
-video.initFaceDetect()
-time.sleep(1)
+def main():
+    URL = "rtsp://root:1111111a@10.16.4.169/live1s1.sdp"
+    argc = len(sys.argv)
+    if argc >= 2:
+        URL = sys.argv[1]
 
-while True:
-    frame = video.getFrame()
+    def gen(stream):
+        while True:
+            frame = stream.getFrame()
 
-    # face detect
-    frame = video.faceDetect(frame)
+            # face detect
+            frame = stream.faceDetect(frame)
 
-    cv2.imshow('Image', frame)
-    if cv2.waitKey(1) == 27:
-        cv2.destroyAllWindows()
-        video.stop()
-        break
+            image = cv2.imencode('.jpg', frame)[1].tobytes()
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + image + b'\r\n')
+
+            # if cv2.waitKey(1) == 27:
+            #     cv2.destroyAllWindows()
+            #     stream.stop()
+            #     break
+
+    app = Flask(__name__)
+
+    @app.route('/')
+    def index():
+        return render_template('index.html')
+
+    @app.route('/video_feed')
+    def video_feed():
+        video = captureVideo(URL)
+        video.start()
+        video.initFaceDetect()
+        time.sleep(1)
+
+        return Response(gen(video),
+                        mimetype='multipart/x-mixed-replace; boundary=frame')
+
+    app.run(host='10.16.4.168', port=8080, threaded=True)
+
+if (__name__ == "__main__"):
+    main()
