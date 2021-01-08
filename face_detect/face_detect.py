@@ -71,7 +71,7 @@ def main():
             #     stream.stop()
             #     break
 
-    app = Flask(__name__)
+    app = Flask(__name__, template_folder='Templates')
 
     @app.route('/')
     def index():
