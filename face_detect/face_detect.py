@@ -27,9 +27,13 @@ class captureVideo:
         self.isStop = True
 
     def initFaceDetect(self):
+		# linux
         self.face = cv2.CascadeClassifier(
-            'C:\Python38\Lib\site-packages\cv2\data\haarcascade_frontalface_default.xml')
+            '/usr/local/share/opencv4/haarcascades/haarcascade_frontalface_default.xml')
 
+		#windows
+		#self.face = cv2.CascadeClassifier(
+        #    'C:\Python38\Lib\site-packages\cv2\data\haarcascade_frontalface_default.xml')
     def faceDetect(self, frame):
         # gray image
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -75,7 +79,7 @@ def main():
 
     @app.route('/')
     def index():
-        return render_template('index.html')
+        return render_template("index.html")
 
     @app.route('/video_feed')
     def video_feed():
@@ -87,7 +91,7 @@ def main():
         return Response(gen(video),
                         mimetype='multipart/x-mixed-replace; boundary=frame')
 
-    app.run(host='10.16.4.168', port=8080, threaded=True)
+    app.run(host='0.0.0.0', port=5000, threaded=True)
 
 if (__name__ == "__main__"):
     main()
